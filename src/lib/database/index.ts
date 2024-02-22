@@ -15,17 +15,21 @@ const MONGODB_URI = process.env.MONGO_URI;
 
 export const connectToDatabase = async () => {
   // connection reusing
-  if (cached?.conn) return cached.conn;
+  if (cached?.conn) {
+    console.log("Using existing connection");
+    return cached.conn;
+  }
 
   if (!MONGODB_URI) throw new Error("MONGO URI is missing");
 
   cached.promise =
     cached?.promise ||
     mongoose.connect(MONGODB_URI, {
-      dbName: "evently",
+      dbName: "Evently",
       // mongoDb won't wait
       bufferCommands: false,
     });
+  console.log("New connection created");
 
   cached.conn = await cached.promise;
   return cached.conn;
