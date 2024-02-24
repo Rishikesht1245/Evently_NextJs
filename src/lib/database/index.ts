@@ -11,7 +11,7 @@ import mongoose from "mongoose";
 // it is stored in global
 let cached = (global as any).mongoose || { conn: null, promise: null };
 
-const MONGODB_URI = process.env.MONGO_URI;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 export const connectToDatabase = async () => {
   // connection reusing
