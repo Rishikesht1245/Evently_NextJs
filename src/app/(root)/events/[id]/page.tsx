@@ -6,7 +6,7 @@ const SingleEvent = () => {
   const userId = sessionClaims?.userId as string;
   return (
     <section className="bg-primary-50 bg-dotted-pattern bg-center py-5 md:py-10">
-      Single Event
+      Single Event Page
     </section>
   );
 };
