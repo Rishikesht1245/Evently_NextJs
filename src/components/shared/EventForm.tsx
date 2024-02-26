@@ -27,13 +27,16 @@ import "react-datepicker/dist/react-datepicker.css";
 import { Checkbox } from "../ui/checkbox";
 import { useUploadThing } from "@/lib/uploadthing";
 import { useRouter } from "next/navigation";
-import { CreateEvent } from "@/lib/actions/event.actions";
+import { createEvent, updateEvent } from "@/lib/actions/event.actions";
+import { IEvent } from "@/lib/database/models/event.model";
 
 type Props = {
   userId: string;
   type: "create" | "update";
+  event?: IEvent;
+  eventId?: string;
 };
-const EventForm = ({ userId, type }: Props) => {
+const EventForm = ({ userId, type, event, eventId }: Props) => {
   console.log(userId);
   // For storing image upload
   const [files, setFiles] = useState<File[]>([]);
@@ -42,7 +45,14 @@ const EventForm = ({ userId, type }: Props) => {
   const router = useRouter();
 
   const { startUpload } = useUploadThing("imageUploader");
-  const initialValues = eventDefaultValues;
+  const initialValues =
+    event && type === "update"
+      ? {
+          ...event,
+          startDateTime: new Date(event?.startDateTime!),
+          endDateTime: new Date(event?.endDateTime!),
+        }
+      : eventDefaultValues;
   // defining form : type of formSchema inferring
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
@@ -67,7 +77,7 @@ const EventForm = ({ userId, type }: Props) => {
 
     if (type === "create") {
       try {
-        const newEvent = await CreateEvent({
+        const newEvent = await createEvent({
           event: { ...values, imageUrl: uploadedImageUrl },
           userId,
           //     Redirection link after creating new event
@@ -77,6 +87,27 @@ const EventForm = ({ userId, type }: Props) => {
         if (newEvent) {
           form.reset();
           router.push(`/events/${newEvent._id}`);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    if (type === "update") {
+      if (!eventId) {
+        router.back();
+        return;
+      }
+      try {
+        const updatedEvent = await updateEvent({
+          userId,
+          event: { ...values, imageUrl: uploadedImageUrl, _id: eventId },
+          path: "/profile",
+        });
+
+        if (updatedEvent) {
+          form.reset();
+          router.push(`/events/${updatedEvent._id}`);
         }
       } catch (error) {
         console.log(error);
@@ -207,7 +238,7 @@ const EventForm = ({ userId, type }: Props) => {
                     </p>
                     {/* Date Picker */}
                     <DatePicker
-                      selected={startDate}
+                      selected={event?.startDateTime || startDate}
                       onChange={(date: Date) => setStartDate(date!)}
                       showTimeSelect
                       timeInputLabel="Time"
@@ -239,7 +270,7 @@ const EventForm = ({ userId, type }: Props) => {
                     </p>
                     {/* Date Picker */}
                     <DatePicker
-                      selected={endDate}
+                      selected={event?.endDateTime || endDate}
                       onChange={(date: Date) => setEndDate(date!)}
                       showTimeSelect
                       timeInputLabel="Time"

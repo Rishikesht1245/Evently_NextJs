@@ -43,6 +43,7 @@ const Dropdown = ({ onChange, value }: Props) => {
       setCategories((prev) => [...prev, category]);
     });
   };
+  console.log(value);
 
   useEffect(() => {
     const getCategories = async () => {
@@ -56,7 +57,10 @@ const Dropdown = ({ onChange, value }: Props) => {
   return (
     <Select onValueChange={onChange} defaultValue={value}>
       <SelectTrigger className="select-field">
-        <SelectValue className="text-grey-500" placeholder="Category" />
+        <SelectValue
+          className="text-grey-500"
+          placeholder={value || "Category"}
+        />
       </SelectTrigger>
       <SelectContent>
         {categories?.length > 0 &&
