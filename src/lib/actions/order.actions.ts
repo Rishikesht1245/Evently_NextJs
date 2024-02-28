@@ -1,12 +1,21 @@
 "use server";
 
-import { CheckoutOrderParams, CreateOrderParams } from "@/types";
+import {
+  CheckoutOrderParams,
+  CreateOrderParams,
+  GetOrdersByEventParams,
+  GetOrdersByUserParams,
+} from "@/types";
 import { handleError } from "../utils";
 import Stripe from "stripe";
 import { redirect } from "next/navigation";
 import Order, { IOrder } from "../database/models/order.model";
 import { connectToDatabase } from "../database";
+import Event from "../database/models/event.model";
+import User from "../database/models/user.model";
+import { ObjectId } from "mongodb";
 
+// function to create stripe session for payment
 export const checkoutOrder = async (order: CheckoutOrderParams) => {
   // Create a stripe instance
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -44,6 +53,7 @@ export const checkoutOrder = async (order: CheckoutOrderParams) => {
   }
 };
 
+// function for webhook to create order in db
 export const createOrder = async (order: CreateOrderParams) => {
   try {
     await connectToDatabase();
@@ -59,3 +69,107 @@ export const createOrder = async (order: CreateOrderParams) => {
     handleError(error);
   }
 };
+
+// function to retrieve user orders
+export async function getOrdersByUser({
+  userId,
+  limit = 3,
+  page,
+}: GetOrdersByUserParams) {
+  try {
+    await connectToDatabase();
+
+    const skipAmount = (Number(page) - 1) * limit;
+    const conditions = { buyer: userId };
+
+    // distinct is used to get unique values
+    const orders = await Order.distinct("event._id")
+      .find(conditions)
+      .sort({ createdAt: "desc" })
+      .skip(skipAmount)
+      .limit(limit)
+      // nested population of events -> users
+      .populate({
+        path: "event",
+        model: Event,
+        populate: {
+          path: "organizer",
+          model: User,
+          select: "_id firstName lastName",
+        },
+      });
+
+    const ordersCount = await Order.distinct("event._id").countDocuments(
+      conditions
+    );
+
+    return {
+      data: JSON.parse(JSON.stringify(orders)),
+      totalPages: Math.ceil(ordersCount / limit),
+    };
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+// function to get orders by event : for organizer to see their sold tickets
+export async function getOrdersByEvent({
+  searchString,
+  eventId,
+}: GetOrdersByEventParams) {
+  try {
+    await connectToDatabase();
+
+    if (!eventId) throw new Error("Event ID is required");
+    const eventObjectId = new ObjectId(eventId);
+
+    const orders = await Order.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "buyer",
+          foreignField: "_id",
+          as: "buyer",
+        },
+      },
+      {
+        $unwind: "$buyer",
+      },
+      {
+        $lookup: {
+          from: "events",
+          localField: "event",
+          foreignField: "_id",
+          as: "event",
+        },
+      },
+      {
+        $unwind: "$event",
+      },
+      {
+        $project: {
+          _id: 1,
+          totalAmount: 1,
+          createdAt: 1,
+          eventTitle: "$event.title",
+          eventId: "$event._id",
+          buyer: {
+            $concat: ["$buyer.firstName", " ", "$buyer.lastName"],
+          },
+        },
+      },
+      {
+        $match: {
+          $and: [
+            { eventId: eventObjectId },
+            { buyer: { $regex: RegExp(searchString, "i") } },
+          ],
+        },
+      },
+    ]);
+
+    return JSON.parse(JSON.stringify(orders));
+  } catch (error) {
+    handleError(error);
+  }
+}

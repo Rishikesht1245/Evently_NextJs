@@ -17,11 +17,11 @@ const Card = ({ event, hasOrderLink, hidePrice }: CardProps) => {
 
   const isEventCreator = userId === event?.organizer?._id.toString();
   return (
-    <div className="group relative flex min-h-[380px] w-full max-w-[400px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg md:min-h-[480px]">
+    <div className="group relative flex min-h-[350px] w-full max-w-[380px] flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg">
       <Link
         href={`/events/${event?._id}`}
         style={{ backgroundImage: `url(${event.imageUrl})` }}
-        className="flex-center h-[200px] lg:h-[250px] w-full bg-cover bg-center text-gray-500 hover:scale-110 transition-all duration-300"
+        className="flex-center min-h-[200px] w-full bg-cover bg-center text-gray-500 hover:scale-110 transition-all duration-300"
       />
       {/* Is event creator */}
       {isEventCreator && !hidePrice && (
@@ -38,7 +38,7 @@ const Card = ({ event, hasOrderLink, hidePrice }: CardProps) => {
           <DeleteConfirmation eventId={event?._id} />
         </div>
       )}
-      <div className="flex min-h-[230px] flex-col gap-3 p-5 md:gap-4">
+      <div className="flex min-h-[150px] flex-col justify-between gap-3 p-5 md:gap-5">
         {!hidePrice && (
           <div className="flex gap-2">
             <span className="p-semibold-14 w-min rounded-full bg-green-100 text-green-60 px-4 py-2">
@@ -50,15 +50,17 @@ const Card = ({ event, hasOrderLink, hidePrice }: CardProps) => {
           </div>
         )}
         {/* Date and time */}
-        <p className="p-medium-16 text-grey-500">
-          {formatDateTime(event.startDateTime!).dateTime}
-        </p>
-        {/* Title */}
-        <Link href={`/events/${event?._id}`} className="cursor-pointer">
-          <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">
-            {event?.title}
+        <div className="flex flex-col gap-2">
+          <p className="p-medium-16 text-grey-500">
+            {formatDateTime(event.startDateTime!).dateTime}
           </p>
-        </Link>
+          {/* Title */}
+          <Link href={`/events/${event?._id}`} className="cursor-pointer">
+            <p className="p-medium-16 md:p-medium-20 line-clamp-2 flex-1 text-black">
+              {event?.title}
+            </p>
+          </Link>
+        </div>
         <div className="flex-between w-full">
           <p className="p-medium-14 md:p-medium-16 text-grey-600">
             {event?.organizer?.firstName} {event?.organizer?.lastName}
