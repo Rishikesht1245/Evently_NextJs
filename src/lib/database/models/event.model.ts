@@ -10,8 +10,8 @@ export interface IEvent extends Document {
   imageUrl: string;
   startDateTime?: Date;
   endDateTime?: Date;
-  price?: string;
-  isFree?: boolean;
+  price: string;
+  isFree: boolean;
   url?: string;
   //Here we mentioned the data which we will populate
   category?: { _id: string; name: string };
