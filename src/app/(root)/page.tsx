@@ -19,7 +19,6 @@ export default async function Home({ searchParams }: SearchParamProps) {
     limit: 6,
   });
 
-  console.log(events);
   return (
     <>
       {/* Hero section */}
@@ -72,7 +71,7 @@ export default async function Home({ searchParams }: SearchParamProps) {
           collectionType="All_Events"
           limit={6}
           page={1}
-          totalPages={2}
+          totalPages={events?.totalPages}
         />
       </section>
     </>
