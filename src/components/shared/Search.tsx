@@ -28,6 +28,7 @@ const Search = ({ placeholder }: { placeholder: string }) => {
         });
       }
 
+      // scroll : false is set to disable browser to scroll to the top of the screen
       router.push(newUrl, { scroll: false });
     }, 300);
 
